@@ -11,6 +11,14 @@ django = {index = "https://pypi.douban.com/simple", version = "*"}
 markdown = "*"
 django-filter = "*"
 mysqlclient = "*"
+pillow = "*"
+future = "*"
+six = "*"
+django-crispy-forms = "*"
+django-reversion = "*"
+django-import-export = "*"
+django-formtools = "*"
+httplib2 = "*"
 
 [requires]
 python_version = "3.7"
