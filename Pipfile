@@ -6,7 +6,6 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-djangorestframework = "*"
 django = {index = "https://pypi.douban.com/simple", version = "*"}
 markdown = "*"
 django-filter = "*"
@@ -19,6 +18,14 @@ django-reversion = "*"
 django-import-export = "*"
 django-formtools = "*"
 httplib2 = "*"
+coreapi = "*"
+pygments = "*"
+django-guardian = "*"
+drf-yasg = "*"
+djangorestframework = "*"
+django-cors-headers = "*"
+djangorestframework-simplejwt = "*"
+yunpian-python-sdk = "*"
 
 [requires]
 python_version = "3.7"
