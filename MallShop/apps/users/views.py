@@ -7,6 +7,7 @@ from rest_framework import viewsets, status
 from random import choice
 
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import SmsSerializer, UserRegSerializer
 from .models import VerifyCode
@@ -76,3 +77,21 @@ class UserViewset(CreateModelMixin, viewsets.GenericViewSet):
     """
     serializer_class = UserRegSerializer
     queryset = User.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = self.perform_create(serializer)
+        refresh = RefreshToken.for_user(user)  # 手动添加jwt
+
+        data = serializer.data
+        data['refresh'] = str(refresh)
+        data['access'] = str(refresh.access_token)
+        data['name'] = user.name if user.name else user.username
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        return serializer.save()
