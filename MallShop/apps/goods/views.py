@@ -22,11 +22,11 @@ class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     商品列表页，分页，搜索，过滤，排序
     """
-    queryset = Goods.objects.all()
+    queryset = Goods.objects.all().order_by("id")  # 分页需要先排序，不然会有UnorderedObjectListWarning
     serializer_class = GoodsSerializer
     pagination_class = StandardResultsSetPagination
     # authentication_classes = (TokenAuthentication,)
- 
+
     # 过滤和搜索
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_class = GoodsFilter
@@ -36,8 +36,10 @@ class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
-    List:
+    list:
         商品分类列表数据
+    retrieve:
+        商品分类详情页
     """
     queryset = GoodsCategory.objects.filter(category_type=1)  # 提取第一级目录
     serializer_class = CategorySerializer

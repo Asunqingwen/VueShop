@@ -27,7 +27,8 @@ from rest_framework.authtoken import views
 
 from .settings import MEDIA_ROOT
 from goods.views import GoodsListViewSet, CategoryViewSet
-from users.views import SmsCodeViewset,UserViewset
+from users.views import SmsCodeViewset, UserViewset
+from user_operation.views import UserFavViewset
 
 # 配置goods的url
 router = DefaultRouter()
@@ -40,7 +41,10 @@ router.register('categorys', CategoryViewSet, basename='categorys')
 
 # 配置验证码的url
 router.register('codes', SmsCodeViewset, basename='codes')
-router.register('users',UserViewset,basename='users')
+router.register('users', UserViewset, basename='users')
+
+# 收藏
+router.register('userfavs', UserFavViewset, basename='userfavs')
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -60,8 +64,9 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
     # drf自带token认证模式
-    path('api-token-auth/', views.obtain_auth_token),
+    # path('api-token-auth/', views.obtain_auth_token),
 
+    # simple-jwt认证模式
     # simple-jwt认证模式
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

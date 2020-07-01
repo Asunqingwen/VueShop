@@ -2,14 +2,16 @@ from django.shortcuts import render
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
-from rest_framework.mixins import CreateModelMixin
+from rest_framework import mixins
 from rest_framework import viewsets, status
 from random import choice
 
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .serializers import SmsSerializer, UserRegSerializer
+from rest_framework import permissions
+from rest_framework import authentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .serializers import SmsSerializer, UserRegSerializer, UserDetailSerializer
 from .models import VerifyCode
 from utils.yunpian import YunPian
 
@@ -31,7 +33,7 @@ class CustomBackend(ModelBackend):
             return None
 
 
-class SmsCodeViewset(CreateModelMixin, viewsets.GenericViewSet):
+class SmsCodeViewset(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """
     发送短信验证码
     """
@@ -71,12 +73,38 @@ class SmsCodeViewset(CreateModelMixin, viewsets.GenericViewSet):
             }, status=status.HTTP_201_CREATED)
 
 
-class UserViewset(CreateModelMixin, viewsets.GenericViewSet):
+class UserViewset(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     用户
     """
-    serializer_class = UserRegSerializer
+
     queryset = User.objects.all()
+
+    authentication_classes = (JWTAuthentication, authentication.SessionAuthentication,)
+
+    # serializer_class = UserRegSerializer
+    def get_serializer_class(self):
+        """
+        动态配置serializer_class
+        :return:
+        """
+        if self.action == "retrieve":
+            return UserDetailSerializer  # 返回具体的serializer类
+        elif self.action == "create":
+            return UserRegSerializer
+        return UserDetailSerializer
+
+    # permission_classes = (permissions.IsAuthenticated,)
+    def get_permissions(self):
+        """
+        动态配置permissions_classes
+        :return:
+        """
+        if self.action == "retrieve":
+            return [permissions.IsAuthenticated()]  # 返回permissions的一个实例
+        elif self.action == "create":
+            return []
+        return []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -86,12 +114,17 @@ class UserViewset(CreateModelMixin, viewsets.GenericViewSet):
         refresh = RefreshToken.for_user(user)  # 手动添加jwt
 
         data = serializer.data
+        # 生成jwt
         data['refresh'] = str(refresh)
         data['access'] = str(refresh.access_token)
         data['name'] = user.name if user.name else user.username
 
         headers = self.get_success_headers(serializer.data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+    # 返回用户信息
+    def get_object(self):
+        return self.request.user
 
     def perform_create(self, serializer):
         return serializer.save()
