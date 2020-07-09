@@ -26,6 +26,8 @@ djangorestframework = "*"
 django-cors-headers = "*"
 djangorestframework-simplejwt = "*"
 yunpian-python-sdk = "*"
+pycryptodome = "*"
+alipay-sdk-python-pycryptodome = "*"
 
 [requires]
 python_version = "3.7"

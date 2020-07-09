@@ -15,16 +15,17 @@ class ShoppingCart(models.Model):
     """
     user = models.ForeignKey(User, verbose_name="用户", on_delete=CASCADE)  # 用户删除，则删除对应的购物车
     goods = models.ForeignKey(Goods, verbose_name="商品", on_delete=CASCADE)  # 商品删除，则删除对应的购物车
-    goods_num = models.IntegerField(default=0, verbose_name="购买数量")
+    nums = models.IntegerField(default=0, verbose_name="购买数量")
 
     add_time = models.DateTimeField(default=timezone.now, verbose_name=u"添加时间")
 
     class Meta:
         verbose_name = '购物车'
         verbose_name_plural = verbose_name
+        unique_together = ("user", "goods")
 
     def __str__(self):
-        return "%s(%d)".format(self.goods.name, self.goods_num)
+        return "%s(%d)".format(self.goods.name, self.nums)
 
 
 class OrderInfo(models.Model):
@@ -40,7 +41,7 @@ class OrderInfo(models.Model):
     )
 
     user = models.ForeignKey(User, verbose_name="用户", on_delete=CASCADE)
-    order_sn = models.CharField(max_length=30, null=True, blank=True, unique=True, verbose_name="订单号")
+    order_sn = models.CharField(max_length=30, null=False, blank=True, unique=True, verbose_name="订单号")
     trade_no = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="交易号")
     pay_status = models.CharField(choices=ORDER_STATUS, default="paying", max_length=30, verbose_name="订单状态")
     post_script = models.CharField(max_length=200, verbose_name="订单留言")

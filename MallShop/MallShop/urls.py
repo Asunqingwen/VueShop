@@ -23,12 +23,13 @@ from django.views.static import serve
 from django.urls import path, include
 from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken import views
 
 from .settings import MEDIA_ROOT
 from goods.views import GoodsListViewSet, CategoryViewSet
 from users.views import SmsCodeViewset, UserViewset
-from user_operation.views import UserFavViewset
+from user_operation.views import UserFavViewset, LeavingMessageViewset, AddressViewset
+from trade.views import ShoppingCartViewset, OrderViewset, AlipayView
+from django.views.generic import TemplateView
 
 # 配置goods的url
 router = DefaultRouter()
@@ -45,6 +46,15 @@ router.register('users', UserViewset, basename='users')
 
 # 收藏
 router.register('userfavs', UserFavViewset, basename='userfavs')
+# 留言
+router.register('messages', LeavingMessageViewset, basename='messages')
+# 收货地址
+router.register('address', AddressViewset, basename='address')
+
+# 购物车
+router.register('shopcarts', ShoppingCartViewset, basename='shopcarts')
+# 订单相关
+router.register('orders', OrderViewset, basename='orders')
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -80,4 +90,8 @@ urlpatterns = [
 
     # router注册页
     path('', include(router.urls)),
+
+    path('alipay/return/', AlipayView.as_view(), name="alipay"),
+
+    path('index/', TemplateView.as_view(template_name="index.html"), name='index'),
 ]
