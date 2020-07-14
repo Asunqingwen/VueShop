@@ -28,6 +28,11 @@ djangorestframework-simplejwt = "*"
 yunpian-python-sdk = "*"
 pycryptodome = "*"
 alipay-sdk-python-pycryptodome = "*"
+drf-extensions = "*"
+django-redis = "*"
+django-redis-cache = "*"
+social-auth-app-django = "*"
+sentry-sdk = "*"
 
 [requires]
 python_version = "3.7"

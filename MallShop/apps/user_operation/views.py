@@ -39,6 +39,7 @@ class UserFavViewset(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retr
         return UserFav.objects.filter(user=self.request.user)  # 获取当前用户的收藏列表
 
 
+
 class LeavingMessageViewset(mixins.ListModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin,
                             viewsets.GenericViewSet):
     """

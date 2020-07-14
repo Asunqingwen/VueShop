@@ -8,6 +8,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
+from rsa import VerificationError
 
 from utils.permissions import IsOwnerOrReadOnly
 from .serializers import ShopCartSerializer, ShopCartDetailSerializer, OrderSerializer, OrderDetailSerializer
@@ -31,6 +32,43 @@ class ShoppingCartViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
     authentication_classes = (JWTAuthentication, SessionAuthentication)
     lookup_field = "goods_id"  # 查询使用商品的ID，不使用购物记录的id
+
+    def perform_create(self, serializer):
+        """
+        增加购物车，商品数量减
+        :param serializer:
+        :return:
+        """
+        shop_cart = serializer.save()
+        goods = shop_cart.goods
+        goods.goods_num -= shop_cart.nums
+        goods.save()
+
+    def perform_destroy(self, instance):
+        """
+        删除购物车，商品数量加
+        :param instance:
+        :return:
+        """
+        goods = instance.goods
+        goods.goods_num += instance.nums
+        goods.save()
+        instance.delete()
+
+    def perform_update(self, serializer):
+        # 更新前，购物车中的数量
+        existed_record = ShoppingCart.objects.get(id=serializer.instance.id)
+        existed_nums = existed_record.nums
+
+        # 更新购物车中的数量
+        saved_record = serializer.save()
+
+        # 更新后数量差
+        nums = saved_record.nums - existed_nums
+
+        goods = saved_record.goods
+        goods.goods_num -= nums
+        goods.save()
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -92,7 +130,7 @@ class AlipayView(APIView):
             with open(ali_pub_key_path) as public_key:  # 打开公钥文件
                 status = verify_with_rsa(public_key.read().encode('utf-8').decode('utf-8'), message, sign)  # 验证签名并获取结果
                 return status  # 返回验证结果
-        except:
+        except VerificationError:
             return status
 
     def get(self, request):
@@ -102,9 +140,7 @@ class AlipayView(APIView):
         :return:
         """
         params = request.GET.dict()  # 获取参数字典
-        from pprint import pprint
-        pprint(request.GET)
-        response = redirect("index")
+
         if self.check_pay(params):
             order_sn = params.get('out_trade_no', None)
             trade_no = params.get('trade_no', None)
@@ -116,6 +152,7 @@ class AlipayView(APIView):
                 existed_order.trade_no = trade_no
                 existed_order.pay_time = datetime.now()
                 existed_order.save()
+        response = redirect("index")
         response.set_cookie("nextPath", "pay", max_age=3)
         return response
 
@@ -126,8 +163,7 @@ class AlipayView(APIView):
         :return:
         """
         params = request.POST.dict()  # 获取参数字典
-        from pprint import pprint
-        pprint(request.POST)
+
         if self.check_pay(params):
             order_sn = params.get('out_trade_no', None)
             trade_no = params.get('trade_no', None)
@@ -135,6 +171,14 @@ class AlipayView(APIView):
 
             existed_orders = OrderInfo.objects.filter(order_sn=order_sn)
             for existed_order in existed_orders:
+                # 获取某个订单中的所有商品
+                order_goods = existed_order.goods.all()
+                for order_good in order_goods:
+                    goods = order_good.goods
+                    # 更新订单中所有商品的售卖量
+                    goods.sold_num += order_good.goods_num
+                    goods.save()
+
                 existed_order.pay_status = trade_status
                 existed_order.trade_no = trade_no
                 existed_order.pay_time = datetime.now()

@@ -25,7 +25,7 @@ from rest_framework.documentation import include_docs_urls
 from rest_framework.routers import DefaultRouter
 
 from .settings import MEDIA_ROOT
-from goods.views import GoodsListViewSet, CategoryViewSet
+from goods.views import GoodsListViewSet, CategoryViewSet, BannerViewset, HotSearchsViewset, IndexCategoryViewset
 from users.views import SmsCodeViewset, UserViewset
 from user_operation.views import UserFavViewset, LeavingMessageViewset, AddressViewset
 from trade.views import ShoppingCartViewset, OrderViewset, AlipayView
@@ -42,6 +42,8 @@ router.register('categorys', CategoryViewSet, basename='categorys')
 
 # 配置验证码的url
 router.register('codes', SmsCodeViewset, basename='codes')
+router.register('hotsearchs', HotSearchsViewset, basename='hotsearchs')
+
 router.register('users', UserViewset, basename='users')
 
 # 收藏
@@ -56,6 +58,12 @@ router.register('shopcarts', ShoppingCartViewset, basename='shopcarts')
 # 订单相关
 router.register('orders', OrderViewset, basename='orders')
 
+# 轮播图url
+router.register('banners', BannerViewset, basename='banners')
+
+# 首页商品系列数据
+router.register('indexgoods', IndexCategoryViewset, basename='indexgoods')
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Lemon API接口文档平台",  # 必传
@@ -68,6 +76,9 @@ schema_view = get_schema_view(
     public=True,
     # permission_classes=(permissions.AllowAny,),   # 权限类
 )
+
+# def trigger_error(request):
+#     division_by_zero = 1 / 0
 
 urlpatterns = [
     path('xadmin/', xadmin.site.urls),
@@ -94,4 +105,10 @@ urlpatterns = [
     path('alipay/return/', AlipayView.as_view(), name="alipay"),
 
     path('index/', TemplateView.as_view(template_name="index.html"), name='index'),
+
+    # 第三方登录
+    path('extra/', include('social_django.urls', namespace='social')),
+
+    #sentry验证
+    # path('sentry-debug/', trigger_error),
 ]

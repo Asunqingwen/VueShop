@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'rest_framework.authtoken',
+    'social_django',
     'users',
     'goods',
     'trade',
@@ -75,13 +76,21 @@ ROOT_URLCONF = 'MallShop.urls'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',  # drf自带接口文档需要
-
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
         # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    # 流量控制
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',  # 用户未登录，根据IP判断
+        'rest_framework.throttling.UserRateThrottle'  # 用户已登录，根据token判断
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    },
 }
 
 TEMPLATES = [
@@ -95,6 +104,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # 第三方登录
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -110,8 +122,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'vue_shop',
         'USER': 'root',
-        'PASSWORD': '123456',
-        'HOST': '149.129.105.109',
+        # 'PASSWORD': '123456',
+        # 'HOST': '149.129.105.109',
+        'PASSWORD': 'root',
+        'HOST': '127.0.0.1',
         'OPTIONS': {'init_command': 'SET storage_engine=INNODB;'}
     },
 }
@@ -161,6 +175,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # 自定义用户登录
 AUTHENTICATION_BACKENDS = (
     'users.views.CustomBackend',
+    'social_core.backends.weibo.WeiboOAuth2',
+    'social_core.backends.qq.QQOAuth2',
+    'social_core.backends.weixin.WeixinOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
 )
 
 # simple-jwt设置
@@ -183,3 +201,43 @@ ali_pub_key_path = os.path.join(BASE_DIR, 'apps/trade/keys/alipay_key_2048.txt')
 notify_url = "http://149.129.105.109:8080/alipay/return/"
 return_url = "http://149.129.105.109:8080/alipay/return/"
 appid = "2016101000656362"
+
+REST_FRAMEWORK_EXTENSIONS = {
+    # 过期时间  单位是秒
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT': 5
+}
+
+# django-redis配置
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+SOCIAL_AUTH_WEIBO_KEY = '2689096765'
+SOCIAL_AUTH_WEIBO_SECRET = 'fe95738f099d68a0a5b08a8ba9c6bee4'
+
+SOCIAL_AUTH_QQ_KEY = 'foobar'
+SOCIAL_AUTH_QQ_SECRET = 'bazqux'
+
+SOCIAL_AUTH_WEIXIN_KEY = 'foobar'
+SOCIAL_AUTH_WEIXIN_SECRET = 'bazqux'
+
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/index/'
+
+# sentry配置
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+
+sentry_sdk.init(
+    dsn="http://e2a9ff04318743b9b55e7b2be7d80d3c@47.103.86.8:9000/3",
+    integrations=[DjangoIntegration(), RedisIntegration()],
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)

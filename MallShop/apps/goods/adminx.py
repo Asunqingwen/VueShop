@@ -1,5 +1,5 @@
 import xadmin
-from .models import Goods, GoodsCategory, GoodsCategoryBrand, GoodsImage, Banner
+from .models import Goods, GoodsCategory, GoodsCategoryBrand, GoodsImage, Banner,HotSearchWords,IndexAd
 
 
 class GoodsAdmin(object):
@@ -45,8 +45,16 @@ class GoodsBrandAdmin(object):
 class BannerGoodsAdmin(object):
     list_display = ["goods", "image", "index"]
 
+class HotSearchAdmin(object):
+    list_display = ["keywords","index","add_time"]
+
+class IndexAdAdmin(object):
+    list_display = ["category", "goods"]
+
 
 xadmin.site.register(Goods, GoodsAdmin)
 xadmin.site.register(GoodsCategory, GoodsCategoryAdmin)
 xadmin.site.register(Banner, BannerGoodsAdmin)
 xadmin.site.register(GoodsCategoryBrand, GoodsBrandAdmin)
+xadmin.site.register(HotSearchWords, HotSearchAdmin)
+xadmin.site.register(IndexAd, IndexAdAdmin)
